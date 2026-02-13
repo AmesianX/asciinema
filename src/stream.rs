@@ -36,6 +36,7 @@ pub enum Event {
     Resize(EventId, Duration, TtySize),
     Marker(EventId, Duration, String),
     Exit(EventId, Duration, i32),
+    Eot(EventId, Duration),
 }
 
 #[derive(Clone)]
@@ -122,7 +123,12 @@ async fn run(
                         }
                     }
 
-                    None => break,
+                    None => {
+                        let time = stream_time + last_event_time.elapsed();
+                        let id = last_event_id.next();
+                        let _ = broadcast_tx.send(Event::Eot(id, time));
+                        break;
+                    },
                 }
             }
 

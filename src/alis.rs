@@ -149,6 +149,17 @@ impl EventSerializer {
 
                 msg
             }
+
+            Eot(id, time) => {
+                let id_bytes = leb128::encode(id);
+                let time_bytes = leb128::encode(self.rel_time(time));
+
+                let mut msg = vec![0x04];
+                msg.extend_from_slice(&id_bytes);
+                msg.extend_from_slice(&time_bytes);
+
+                msg
+            }
         }
     }
 
@@ -397,6 +408,22 @@ mod tests {
             0x1E, // id (30) in LEB128
             0xAC, 0x02, // relative time (300) in LEB128
             0x00, // status (clamped to 0) in LEB128
+        ];
+
+        assert_eq!(bytes, expected);
+        assert_eq!(serializer.0.as_micros(), 5300);
+    }
+
+    #[test]
+    fn test_serialize_eot() {
+        let mut serializer = EventSerializer(Duration::from_micros(5000));
+        let event = Event::Eot(30.into(), Duration::from_micros(5300));
+        let bytes = serializer.serialize_event(event);
+
+        let expected = vec![
+            0x04, // EOT event type
+            0x1E, // id (30) in LEB128
+            0xAC, 0x02, // relative time (300) in LEB128
         ];
 
         assert_eq!(bytes, expected);
