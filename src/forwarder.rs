@@ -125,7 +125,7 @@ pub async fn forward<N: Notifier>(
         }
 
         let delay = exponential_delay(reconnect_attempt);
-        reconnect_attempt = (reconnect_attempt + 1).min(10);
+        reconnect_attempt = reconnect_attempt.saturating_add(1);
         info!("reconnecting in {delay} ms");
 
         tokio::select! {
@@ -252,9 +252,10 @@ fn handle_close_frame(frame: Option<CloseFrame>) -> anyhow::Result<()> {
 
 fn exponential_delay(attempt: usize) -> u64 {
     let mut rng = rand::rng();
-    let base = (RECONNECT_DELAY_BASE * 2_u64.pow(attempt as u32)).min(RECONNECT_DELAY_CAP);
+    let attempt = attempt.min(10);
+    let exp = (RECONNECT_DELAY_BASE * 2_u64.pow(attempt as u32)).min(RECONNECT_DELAY_CAP);
 
-    rng.random_range(..base)
+    rng.random_range((exp / 2)..exp)
 }
 
 fn ws_result(m: Result<Vec<u8>, BroadcastStreamRecvError>) -> anyhow::Result<Message> {
@@ -275,4 +276,48 @@ fn ping_stream() -> impl Stream<Item = Message> {
     IntervalStream::new(time::interval(Duration::from_secs(PING_INTERVAL)))
         .skip(1)
         .map(|_| Message::Ping(vec![].into()))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn exponential_delay_is_within_equal_jitter_bounds() {
+        for _ in 0..1000 {
+            let delay = exponential_delay(0);
+            assert!(delay >= 250, "delay {delay} below lower bound 250");
+            assert!(delay < 500, "delay {delay} above upper bound 499");
+        }
+
+        for _ in 0..1000 {
+            let delay = exponential_delay(1);
+            assert!(delay >= 500, "delay {delay} below lower bound 500");
+            assert!(delay < 1000, "delay {delay} above upper bound 999");
+        }
+
+        for _ in 0..1000 {
+            let delay = exponential_delay(4);
+            assert!(delay >= 4000, "delay {delay} below lower bound 4000");
+            assert!(delay < 8000, "delay {delay} above upper bound 7999");
+        }
+
+        for _ in 0..1000 {
+            let delay = exponential_delay(5);
+            assert!(delay >= 5000, "delay {delay} below lower bound 5000");
+            assert!(delay < 10000, "delay {delay} above upper bound 9999");
+        }
+
+        for _ in 0..1000 {
+            let delay = exponential_delay(10);
+            assert!(delay >= 5000, "delay {delay} below lower bound 5000");
+            assert!(delay < 10000, "delay {delay} above upper bound 9999");
+        }
+
+        for _ in 0..1000 {
+            let delay = exponential_delay(100);
+            assert!(delay >= 5000, "delay {delay} below lower bound 5000");
+            assert!(delay < 10000, "delay {delay} above upper bound 9999");
+        }
+    }
 }
