@@ -265,21 +265,18 @@ fn parse_key<S: AsRef<str>>(key: S) -> Result<Key> {
         }
 
         2 => {
-            if chars[0] == '^' && chars[1].is_ascii_alphabetic() {
-                let key = vec![chars[1].to_ascii_uppercase() as u8 - 0x40];
-
-                return Ok(Some(key));
+            if chars[0] == '^' {
+                if let Some(key) = parse_control_key(chars[1]) {
+                    return Ok(Some(vec![key]));
+                }
             }
         }
 
         3 => {
-            if chars[0].eq_ignore_ascii_case(&'C')
-                && ['+', '-'].contains(&chars[1])
-                && chars[2].is_ascii_alphabetic()
-            {
-                let key = vec![chars[2].to_ascii_uppercase() as u8 - 0x40];
-
-                return Ok(Some(key));
+            if chars[0].eq_ignore_ascii_case(&'C') && ['+', '-'].contains(&chars[1]) {
+                if let Some(key) = parse_control_key(chars[2]) {
+                    return Ok(Some(vec![key]));
+                }
             }
         }
 
@@ -287,6 +284,22 @@ fn parse_key<S: AsRef<str>>(key: S) -> Result<Key> {
     }
 
     Err(anyhow!("invalid key definition '{key}'"))
+}
+
+fn parse_control_key(c: char) -> Option<u8> {
+    let c = c.to_ascii_uppercase();
+
+    if !c.is_ascii() {
+        return None;
+    }
+
+    let c = c as u8;
+
+    if (b'@'..=b'_').contains(&c) {
+        Some(c - 0x40)
+    } else {
+        None
+    }
 }
 
 pub fn check_legacy_config_file() {
@@ -310,5 +323,32 @@ pub fn check_legacy_config_file() {
         );
 
         status::warning!("Read the documentation (CLI -> Configuration) for details.\n");
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_key;
+
+    #[test]
+    fn parse_key_accepts_ctrl_letters() {
+        assert_eq!(parse_key("^w").unwrap(), Some(vec![0x17]));
+        assert_eq!(parse_key("C-w").unwrap(), Some(vec![0x17]));
+        assert_eq!(parse_key("c+w").unwrap(), Some(vec![0x17]));
+    }
+
+    #[test]
+    fn parse_key_accepts_ctrl_punctuation() {
+        assert_eq!(parse_key("^\\").unwrap(), Some(vec![0x1c]));
+        assert_eq!(parse_key("C-\\").unwrap(), Some(vec![0x1c]));
+        assert_eq!(parse_key("^]").unwrap(), Some(vec![0x1d]));
+        assert_eq!(parse_key("C-[").unwrap(), Some(vec![0x1b]));
+    }
+
+    #[test]
+    fn parse_key_rejects_invalid_ctrl_combos() {
+        assert!(parse_key("^0").is_err());
+        assert!(parse_key("C-0").is_err());
+        assert!(parse_key("^?").is_err());
     }
 }
