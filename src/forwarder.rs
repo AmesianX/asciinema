@@ -63,14 +63,12 @@ pub async fn forward<N: Notifier>(
         };
 
         match result {
-            Ok(true) => {
-                break;
-            }
-
-            Ok(false) => {
-                let _ = notifier
-                    .notify("Stream halted by the server".to_string())
-                    .await;
+            Ok(halted) => {
+                if halted {
+                    let _ = notifier
+                        .notify("Stream halted by the server".to_string())
+                        .await;
+                }
 
                 break;
             }
@@ -187,7 +185,7 @@ where
                     },
 
                     None => {
-                        return Ok(true);
+                        return Ok(false);
                     }
                 }
             },
@@ -202,9 +200,8 @@ where
             message = stream.next() => {
                 match message {
                     Some(Ok(Message::Close(close_frame))) => {
-                        info!("server closed the connection");
                         handle_close_frame(close_frame)?;
-                        return Ok(false);
+                        return Ok(true);
                     },
 
                     Some(Ok(Message::Ping(_))) => (),
@@ -234,12 +231,11 @@ async fn send_with_timeout(
 fn handle_close_frame(frame: Option<CloseFrame>) -> anyhow::Result<()> {
     match frame {
         Some(CloseFrame { code, reason }) => {
-            info!("close reason: {code} ({reason})");
+            info!("server closed the connection ({code} [{reason}])");
 
             match code {
-                CloseCode::Normal => Ok(()),
                 CloseCode::Library(code) if code < 4100 => Ok(()),
-                c => bail!("unclean close: {c}"),
+                code => bail!("unexpected close code ({code})"),
             }
         }
 
