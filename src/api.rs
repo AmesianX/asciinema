@@ -24,8 +24,7 @@ pub struct StreamResponse {
     pub url: String,
 }
 
-/// Visibility level for streams and recordings
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Visibility {
     Public,
