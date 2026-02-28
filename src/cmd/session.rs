@@ -339,7 +339,6 @@ impl cli::Session {
             Some(Some(metadata.env.clone()))
         };
 
-        // Convert CLI visibility to API visibility
         let visibility = self.visibility.map(|v| match v {
             StreamVisibility::Public => Visibility::Public,
             StreamVisibility::Unlisted => Visibility::Unlisted,

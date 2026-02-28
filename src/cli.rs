@@ -274,7 +274,7 @@ pub struct Record {
     )]
     pub overwrite: bool,
 
-    /// Set a descriptive title that will be stored in the recording metadata. This title may be displayed by players and is useful for organizing and identifying recordings. For example: --title "Installing Podman on Ubuntu".
+    /// Set a title that will be stored in the recording metadata. This title may be displayed by players and is useful for organizing and identifying recordings. For example: --title "Installing Podman on Ubuntu".
     #[arg(short, long, help = "Title of the recording", long_help)]
     pub title: Option<String>,
 
@@ -398,6 +398,27 @@ pub struct Stream {
     #[arg(short, long, help = "Title of the session", long_help)]
     pub title: Option<String>,
 
+    /// Set a description for the session. This description is displayed on the stream page (applies to remote streaming with --remote) and can include formatting, links, and code blocks. Useful for providing context, instructions, or documentation for viewers.
+    #[arg(
+        long,
+        help = "Description of the session (Markdown supported)",
+        long_help
+    )]
+    pub description: Option<String>,
+
+    /// Set the visibility level for the stream (applies to remote streaming with --remote). Public streams appear in listings and on your profile page. Unlisted streams are accessible via direct URL but don't appear in listings. Private streams are only accessible to the owner.
+    #[arg(long, value_enum, help = "Visibility level", long_help)]
+    pub visibility: Option<StreamVisibility>,
+
+    /// Specify URL of a live audio stream (e.g., Icecast MP3/OGG) to synchronize with the terminal stream (applies to remote streaming with --remote). When set, viewers can listen to audio commentary while watching the terminal. The audio URL is stored in the stream metadata and used by the player for synchronized playback. For example: --audio-url https://icecast.example.com/live.mp3
+    #[arg(
+        long,
+        value_name = "URL",
+        help = "Audio stream URL for synchronized playback",
+        long_help
+    )]
+    pub audio_url: Option<String>,
+
     /// Stream in headless mode without using the terminal for input/output. This is useful for automated or scripted streaming where you don't want asciinema to interfere with the current terminal session. The streamed command will still execute normally and be visible to viewers, but won't be displayed in your local terminal. Headless mode is enabled automatically when running in an environment where a terminal is not available.
     #[arg(
         long,
@@ -421,22 +442,10 @@ pub struct Stream {
     /// Specify a custom asciinema server URL for streaming to self-hosted servers. Use the base server URL (e.g., https://asciinema.example.com). Can also be set via the environment variable ASCIINEMA_SERVER_URL or the config file option server.url. If no server URL is configured via this option, environment variable, or config file, you will be prompted to choose one (defaulting to asciinema.org), which will be saved as a default.
     #[arg(long, value_name = "URL", help = "asciinema server URL", long_help)]
     pub server_url: Option<String>,
-
-    /// URL of a live audio stream (e.g., Icecast MP3/OGG) to synchronize with the terminal stream. When set, viewers can listen to audio commentary while watching the terminal. The audio URL is stored in the stream metadata and used by the player for synchronized playback. For example: --audio-url "https://icecast.example.com/live.mp3"
-    #[arg(long, value_name = "URL", help = "Audio stream URL for synchronized playback", long_help)]
-    pub audio_url: Option<String>,
-
-    /// Markdown description of the streaming session. This description is displayed on the stream page and can include formatting, links, and code blocks. Useful for providing context, instructions, or documentation for viewers.
-    #[arg(long, help = "Description of the session (Markdown supported)", long_help)]
-    pub description: Option<String>,
-
-    /// Set the visibility level for the stream. Public streams appear in listings and search results. Unlisted streams are accessible via direct URL but don't appear in listings. Private streams are only accessible to the owner.
-    #[arg(long, value_enum, help = "Visibility level: public, unlisted, or private", long_help)]
-    pub visibility: Option<StreamVisibility>,
 }
 
 /// Visibility level for streams
-#[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
+#[derive(Debug, Clone, Copy, clap::ValueEnum)]
 pub enum StreamVisibility {
     Public,
     Unlisted,
@@ -510,9 +519,30 @@ pub struct Session {
     )]
     pub overwrite: bool,
 
-    /// Set a descriptive title for the session that will be stored in the recording metadata and displayed to stream viewers (when doing remote streaming with --remote). For example: --title "Installing Podman on Ubuntu". If the server has stream recording enabled then the title will be included in the recording file created on the server side.
+    /// Set a title for the session that will be stored in the recording metadata and displayed to stream viewers (when doing remote streaming with --remote). For example: --title "Installing Podman on Ubuntu". If the server has stream recording enabled then the title will be included in the recording file created on the server side.
     #[arg(short, long, help = "Title of the session", long_help)]
     pub title: Option<String>,
+
+    /// Set a description for the session. This description is displayed on the stream page (applies to remote streaming with --stream-remote) and can include formatting, links, and code blocks. Useful for providing context, instructions, or documentation for viewers.
+    #[arg(
+        long,
+        help = "Description of the session (Markdown supported)",
+        long_help
+    )]
+    pub description: Option<String>,
+
+    /// Set the visibility level for the stream (applies to remote streaming with --stream-remote). Public streams appear in listings and on your profile page. Unlisted streams are accessible via direct URL but don't appear in listings. Private streams are only accessible to the owner.
+    #[arg(long, value_enum, help = "Stream visibility level", long_help)]
+    pub visibility: Option<StreamVisibility>,
+
+    /// Specify URL of a live audio stream (e.g., Icecast MP3/OGG) to synchronize with the terminal stream (applies to remote streaming with --stream-remote). When set, viewers can listen to audio commentary while watching the terminal. The audio URL is stored in the stream metadata and used by the player for synchronized playback. For example: --audio-url https://icecast.example.com/live.mp3
+    #[arg(
+        long,
+        value_name = "URL",
+        help = "Audio stream URL for synchronized playback",
+        long_help
+    )]
+    pub audio_url: Option<String>,
 
     /// Limit the maximum idle time recorded between terminal events to the specified number of seconds. Long pauses (such as when you step away from the terminal) will be capped at this duration in the recording, making playback more watchable. For example, --idle-time-limit 2.0 will ensure no pause longer than 2 seconds appears in the recording. Only applies when --output-file is specified. Note that this option doesn't alter the original (captured) timing information and instead, it embeds the idle time limit value in the metadata, which is interpreted by session players at playback time. This allows tweaking of the limit after recording. Can also be set via the config file option session.idle_time_limit.
     #[arg(
@@ -547,18 +577,6 @@ pub struct Session {
     /// Specify a custom asciinema server URL for streaming to self-hosted servers. Use the base server URL (e.g., https://asciinema.example.com). Can also be set via environment variable ASCIINEMA_SERVER_URL or config file option server.url. If no server URL is configured via this option, environment variable, or config file, you will be prompted to choose one (defaulting to asciinema.org), which will be saved as a default.
     #[arg(long, value_name = "URL", help = "asciinema server URL", long_help)]
     pub server_url: Option<String>,
-
-    /// URL of a live audio stream to synchronize with the terminal stream.
-    #[arg(long, value_name = "URL", help = "Audio stream URL for synchronized playback")]
-    pub audio_url: Option<String>,
-
-    /// Markdown description of the session.
-    #[arg(long, help = "Description of the session (Markdown supported)")]
-    pub description: Option<String>,
-
-    /// Visibility level for the stream.
-    #[arg(long, value_enum, help = "Visibility level: public, unlisted, or private")]
-    pub visibility: Option<StreamVisibility>,
 
     #[arg(hide = true)]
     pub env: Vec<String>,
