@@ -33,6 +33,18 @@ pub enum Visibility {
 }
 
 #[derive(Default, Serialize)]
+pub struct RecordingChangeset {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub title: Option<Option<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<Option<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub visibility: Option<Visibility>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub audio_url: Option<Option<String>>,
+}
+
+#[derive(Default, Serialize)]
 pub struct StreamChangeset {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub live: Option<bool>,
@@ -66,11 +78,15 @@ pub fn get_auth_url(config: &mut Config) -> Result<Url> {
     Ok(url)
 }
 
-pub async fn create_recording(path: &str, config: &mut Config) -> Result<RecordingResponse> {
+pub async fn create_recording(
+    path: &str,
+    changeset: RecordingChangeset,
+    config: &mut Config,
+) -> Result<RecordingResponse> {
     let server_url = &config.get_server_url()?;
     let install_id = config.get_install_id()?;
 
-    let response = create_recording_request(server_url, path, install_id)
+    let response = create_recording_request(server_url, install_id, path, changeset)
         .await?
         .send()
         .await?;
@@ -94,16 +110,44 @@ pub async fn create_recording(path: &str, config: &mut Config) -> Result<Recordi
 
 async fn create_recording_request(
     server_url: &Url,
-    path: &str,
     install_id: String,
+    path: &str,
+    changeset: RecordingChangeset,
 ) -> Result<RequestBuilder> {
     let client = Client::new();
     let mut url = server_url.clone();
     url.set_path("api/v1/recordings");
     let form = Form::new().file("file", path).await?;
+    let form = add_recording_changeset_fields(form, changeset);
     let builder = client.post(url).multipart(form);
 
     Ok(add_headers(builder, &install_id))
+}
+
+fn add_recording_changeset_fields(mut form: Form, changeset: RecordingChangeset) -> Form {
+    if let Some(Some(title)) = changeset.title {
+        form = form.text("title", title);
+    }
+
+    if let Some(Some(description)) = changeset.description {
+        form = form.text("description", description);
+    }
+
+    if let Some(visibility) = changeset.visibility {
+        let visibility = match visibility {
+            Visibility::Public => "public",
+            Visibility::Unlisted => "unlisted",
+            Visibility::Private => "private",
+        };
+
+        form = form.text("visibility", visibility);
+    }
+
+    if let Some(Some(audio_url)) = changeset.audio_url {
+        form = form.text("audio_url", audio_url);
+    }
+
+    form
 }
 
 pub async fn list_user_streams(prefix: &str, config: &mut Config) -> Result<Vec<StreamResponse>> {

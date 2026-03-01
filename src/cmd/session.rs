@@ -16,7 +16,7 @@ use url::Url;
 
 use crate::api::{self, StreamChangeset, StreamResponse, Visibility};
 use crate::asciicast::{self, Version};
-use crate::cli::{self, Format, RelayTarget, StreamVisibility};
+use crate::cli::{self, Format, RelayTarget};
 use crate::config::{self, Config};
 use crate::encoder::{AsciicastV2Encoder, AsciicastV3Encoder, Encoder, RawEncoder, TextEncoder};
 use crate::file_writer::FileWriter;
@@ -340,9 +340,9 @@ impl cli::Session {
         };
 
         let visibility = self.visibility.map(|v| match v {
-            StreamVisibility::Public => Visibility::Public,
-            StreamVisibility::Unlisted => Visibility::Unlisted,
-            StreamVisibility::Private => Visibility::Private,
+            cli::Visibility::Public => Visibility::Public,
+            cli::Visibility::Unlisted => Visibility::Unlisted,
+            cli::Visibility::Private => Visibility::Private,
         });
 
         let changeset = StreamChangeset {
