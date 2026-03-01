@@ -1,5 +1,16 @@
 # asciinema changelog
 
+## 3.2.0 (2026-03-01)
+
+* Improved querying for terminal theme and version
+* Added support for playback from stdin (thanks @fopina!)
+* Improved implementation of ALiS protocol
+* Switched from full jitter to equal jitter when timing stream reconnection attempts
+* Added `--description`, `--visibility`, `--audio-url` options for `stream` and `session` commands (thanks @hh!)
+* Added `--title`, `--description`, `--visibility`, `--audio-url` options for `upload` command
+* Fixed key bindings parsing (regression from 2.x) (#720)
+* Upgraded the embedded player to the latest version
+
 ## 3.1.0 (2026-01-14)
 
 * Implemented caching and compression for static assets served by the built-in
