@@ -398,7 +398,7 @@ pub struct Stream {
     #[arg(short, long, help = "Title of the session", long_help)]
     pub title: Option<String>,
 
-    /// Set a description for the session. This description is displayed on the stream page (applies to remote streaming with --remote) and can include formatting, links, and code blocks. Useful for providing context, instructions, or documentation for viewers.
+    /// Set a description for the session. This description is displayed on the stream page (applies only to remote streaming with --remote) and can include formatting, links, and code blocks. Useful for providing context, instructions, or documentation for viewers.
     #[arg(
         long,
         help = "Description of the session (Markdown supported)",
@@ -406,11 +406,11 @@ pub struct Stream {
     )]
     pub description: Option<String>,
 
-    /// Set the visibility level for the stream (applies to remote streaming with --remote). Public streams appear in listings and on your profile page. Unlisted streams are accessible via direct URL but don't appear in listings. Private streams are only accessible to the owner.
+    /// Set the visibility level for the stream (applies only to remote streaming with --remote). Public streams appear in listings and on your profile page. Unlisted streams are accessible via a direct URL but don't appear in listings. Private streams are only accessible to the owner.
     #[arg(long, value_enum, help = "Visibility level", long_help)]
     pub visibility: Option<Visibility>,
 
-    /// Specify URL of a live audio stream (e.g., Icecast MP3/OGG) to synchronize with the terminal stream (applies to remote streaming with --remote). When set, viewers can listen to audio commentary while watching the terminal. The audio URL is stored in the stream metadata and used by the player for synchronized playback. For example: --audio-url https://icecast.example.com/live.mp3
+    /// Specify the URL of a live audio stream (e.g., Icecast MP3/OGG) to synchronize with the terminal stream (applies only to remote streaming with --remote). When set, viewers can listen to audio commentary while watching the terminal. The audio URL is stored in the stream metadata and used by the player for synchronized playback. For example: --audio-url https://icecast.example.com/live.mp3
     #[arg(
         long,
         value_name = "URL",
@@ -523,7 +523,7 @@ pub struct Session {
     #[arg(short, long, help = "Title of the session", long_help)]
     pub title: Option<String>,
 
-    /// Set a description for the session. This description is displayed on the stream page (applies to remote streaming with --stream-remote) and can include formatting, links, and code blocks. Useful for providing context, instructions, or documentation for viewers.
+    /// Set a description for the session. This description is displayed on the stream page (applies only to remote streaming with --stream-remote) and can include formatting, links, and code blocks. Useful for providing context, instructions, or documentation for viewers.
     #[arg(
         long,
         help = "Description of the session (Markdown supported)",
@@ -531,11 +531,11 @@ pub struct Session {
     )]
     pub description: Option<String>,
 
-    /// Set the visibility level for the stream (applies to remote streaming with --stream-remote). Public streams appear in listings and on your profile page. Unlisted streams are accessible via direct URL but don't appear in listings. Private streams are only accessible to the owner.
+    /// Set the visibility level for the stream (applies only to remote streaming with --stream-remote). Public streams appear in listings and on your profile page. Unlisted streams are accessible via a direct URL but don't appear in listings. Private streams are only accessible to the owner.
     #[arg(long, value_enum, help = "Stream visibility level", long_help)]
     pub visibility: Option<Visibility>,
 
-    /// Specify URL of a live audio stream (e.g., Icecast MP3/OGG) to synchronize with the terminal stream (applies to remote streaming with --stream-remote). When set, viewers can listen to audio commentary while watching the terminal. The audio URL is stored in the stream metadata and used by the player for synchronized playback. For example: --audio-url https://icecast.example.com/live.mp3
+    /// Specify the URL of a live audio stream (e.g., Icecast MP3/OGG) to synchronize with the terminal stream (applies only to remote streaming with --stream-remote). When set, viewers can listen to audio commentary while watching the terminal. The audio URL is stored in the stream metadata and used by the player for synchronized playback. For example: --audio-url https://icecast.example.com/live.mp3
     #[arg(
         long,
         value_name = "URL",
@@ -622,7 +622,7 @@ pub struct Upload {
     /// The path to the asciicast recording file to upload, in a supported asciicast format (v1, v2, or v3).
     pub file: String,
 
-    /// Set a title for the recording that will be stored in the recording metadata and displayed to the viewers. For example: --title "Installing Podman on Ubuntu". This option takes precedence over the "title" field from the recording file itself.
+    /// Set a title for the recording that will be stored in the recording metadata and displayed to viewers. For example: --title "Installing Podman on Ubuntu". This option takes precedence over the "title" field from the recording file itself.
     #[arg(short, long, help = "Title of the recording", long_help)]
     pub title: Option<String>,
 
@@ -634,15 +634,15 @@ pub struct Upload {
     )]
     pub description: Option<String>,
 
-    /// Set the visibility level for the recording. Public recordings appear in listings, search results and on your profile page. Unlisted recordings are accessible via direct URL but don't appear in listings. Private recordings are only accessible to the owner.
+    /// Set the visibility level for the recording. Public recordings appear in listings, search results and on your profile page. Unlisted recordings are accessible via a direct URL but don't appear in listings. Private recordings are only accessible to the owner.
     #[arg(long, value_enum, help = "Recording visibility level", long_help)]
     pub visibility: Option<Visibility>,
 
-    /// Specify URL of an audio file (e.g., MP3/OGG) to synchronize with the terminal playback. When set, viewers can listen to audio commentary while watching the terminal. The audio URL is stored in the recording metadata and used by the player for synchronized playback. For example: --audio-url https://example.com/commentary.mp3
+    /// Specify the URL of an audio file (e.g., MP3/OGG) to synchronize with the terminal playback. When set, viewers can listen to audio commentary while watching the terminal. The audio URL is stored in the recording metadata and used by the player for synchronized playback. For example: --audio-url https://example.com/commentary.mp3
     #[arg(
         long,
         value_name = "URL",
-        help = "Audio stream URL for synchronized playback",
+        help = "Audio URL for synchronized playback",
         long_help
     )]
     pub audio_url: Option<String>,
